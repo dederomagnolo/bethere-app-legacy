@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Col } from 'react-grid-system';
 import { Header } from '../header';
-import { Card } from 'semantic-ui-react';
-import { MenuCard } from '../card';
 import Toggle from 'react-styled-toggle';
 import api from '../../services';
 import * as _ from 'lodash';
 import moment from 'moment';
-import { ResponsiveLine } from '@nivo/line'; 
 import { setColorId, isOdd, setMeasureId } from './utils';
+import {NewCard} from '../newCard';
+import {Cards, MainContainer} from './styles';
+import {Graph} from './graph';
 
 const base_channel_url = "https://api.thingspeak.com/channels/695672"
+const bethereUrl = "http://localhost:4000";
+
 const initialState = {
     measures: { 
         internalHumidity: '' , 
@@ -30,7 +31,7 @@ export const Dashboard = () => {
     const today = moment().format('YYYY-MM-DD');
     const nextDay = moment().add(1, 'days').format('YYYY-MM-DD');
 
-    const queryStart = `${today}%2019:48:30`;
+    const queryStart = `${today}%2000:00:00`;
     const queryEnd = `${nextDay}%2000:00:00`;
 
     // Week Logics
@@ -46,8 +47,9 @@ export const Dashboard = () => {
 
     const updateDataFromRemote = async () => {
         try{
+            const pumpStatusResponse = await api.get(`${bethereUrl}/measures/pumpstatus`);
             const lastFeed = await api.get(`${base_channel_url}/feeds/last.json`);
-            const pumpField = _.get(lastFeed, 'data.field7');
+            const lastPumpStatus = _.get(pumpStatusResponse, 'data.value');
 
             const internalHumidity = _.get(lastFeed, 'data.field3');
             const internalTemperature = _.get(lastFeed, 'data.field4');
@@ -62,7 +64,7 @@ export const Dashboard = () => {
             }
             setMeasures(measuresFromRemote);
 
-            if(pumpField == 1) {
+            if(lastPumpStatus == 1) {
                 setPumpFlag(true);
             } 
         } catch(err) {
@@ -119,116 +121,67 @@ export const Dashboard = () => {
         
     const updatePump = async () => { 
         try{
-            const feedsResponse = await api.get("https://api.thingspeak.com/channels/695672/feeds/last.json");
+            const pumpStatusReponse = await api.get(`${bethereUrl}/measures/pumpstatus`);
             setBlockButtonFlag(true);
-            const pumpStatus = _.get(feedsResponse, 'data.field7');
-            if(pumpStatus == 1) {
-                await api.get(null, {params: {
-                    api_key: 'ZY113X3ZSZG96YC8',
-                    field7: 0
-                } });
+            const pumpStatus = _.get(pumpStatusReponse, 'data.value');
+            if(pumpStatus === "1") {
+                await api.post(`${bethereUrl}/send`, {
+                    measureName: "Pump Status",
+                    value: "0"
+                });
                 setPumpFlag(false);
             } else {
-                await api.get(null, {params: {
-                    api_key: 'ZY113X3ZSZG96YC8',
-                    field7: 1
-                } });   
+                await api.post(`${bethereUrl}/send`, {
+                    measureName: "Pump Status",
+                    value: "1"
+                });  
                 setPumpFlag(true);
             }
             
-            setTimeLeft(16);
+            setTimeLeft(11);
         } catch(err) {
           console.log(err);
         }    
     }
 
     return (
-        <Container style={{height: '100%'}}>
+        <MainContainer>
             <Header title="Dashboard"/>
-            {console.log(chartData)}
-            <Container>
-                <Col xl={12}>
-                    <span style={{fontSize: "20px"}}>Hello! Your garden looks good today:</span>
-                </Col>
-                <Card.Group style={{paddingTop: "20px"}} itemsPerRow={4}>
-                    <MenuCard iconName="tint" label={`${measures.internalHumidity}`} label2="Internal Humidity"/>
-                    <MenuCard iconName="thermometer half" label={`${measures.internalTemperature}`} label2="Internal Temperature"/>
-                    <MenuCard iconName="tint" label={`${measures.externalHumidity}`} label2="External Humidity"/>
-                    <MenuCard iconName="thermometer half" label={`${measures.externalTemperature}`} label2="External Temperature"/>
-                </Card.Group>
-
-                <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', paddingTop: '20px'}}>
-                    <div style={{fontSize: '20px', paddingRight: '20px'}}>
-                        Pump
-                    </div>
-                    <Toggle backgroundColorChecked="#3bea64" disabled={blockButtonFlag} checked={pumpFlag} onChange={() => updatePump()}/>
-                    <div style={{marginLeft: '10px'}}>{blockButtonFlag ? `Wait ${timeLeft} seconds to send another command` : "Available!"}</div>
-                </div>
-
-                <div style={{width: '100%' , height: '300px'}}>
-                    <ResponsiveLine
-                        data={chartData}
-                        margin={{ top: 20, right: 110, bottom: 50, left: 60 }}
-                        xScale={{ type: 'point' }}
-                        yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}
-                        axisTop={null}
-                        axisRight={null}
-                        axisBottom={{
-                            orient: 'bottom',
-                            tickSize: 5,
-                            tickPadding: 5,
-                            tickRotation: 40,
-                            legendOffset: 20,
-                            legendPosition: 'middle'
-                        }}
-                        axisLeft={{
-                            orient: 'left',
-                            tickSize: 5,
-                            tickPadding: 5,
-                            tickRotation: 0,
-                            legend: 'measure',
-                            legendOffset: -40,
-                            legendPosition: 'middle'
-                        }}
-                        colors={{ scheme: 'nivo' }}
-                        pointSize={2}
-                        pointColor={{ theme: 'background' }}
-                        pointBorderWidth={8}
-                        pointBorderColor={{ from: 'serieColor' }}
-                        pointLabel="y"
-                        pointLabelYOffset={-10}
-                        useMesh={true}
-                        legends={[
-                            {
-                                anchor: 'bottom-right',
-                                direction: 'column',
-                                justify: false,
-                                translateX: 100,
-                                translateY: 0,
-                                itemsSpacing: 0,
-                                itemDirection: 'left-to-right',
-                                itemWidth: 80,
-                                itemHeight: 20,
-                                itemOpacity: 0.75,
-                                symbolSize: 12,
-                                symbolShape: 'circle',
-                                symbolBorderColor: 'rgba(0, 0, 0, .5)',
-                                effects: [
-                                    {
-                                        on: 'hover',
-                                        style: {
-                                            itemBackground: 'rgba(0, 0, 0, .03)',
-                                            itemOpacity: 1
-                                        }
-                                    }
-                                ]
-                            }
-                        ]}
+            <div>
+                {/* <span style={{fontSize: "20px"}}>Hello! Your garden looks good today:</span> */}
+                <Cards>
+                    <NewCard 
+                        label={"Temperature (°C)"} 
+                        icon={"thermometer half"} 
+                        internalMeasure={measures.internalTemperature} 
+                        externalMeasure={measures.externalTemperature} 
                     />
-
-                </div>
-                
-            </Container>
-        </Container>
+                    <NewCard 
+                        label={"Humidity (%)"} 
+                        icon={"tint"} 
+                        internalMeasure={measures.internalHumidity} 
+                        externalMeasure={measures.externalHumidity} 
+                    />
+                    <NewCard 
+                        label={"Pump Control"} 
+                        icon={"cog"}
+                        pump={true}
+                        children={
+                            <div>
+                                <Toggle 
+                                    backgroundColorChecked="#3bea64" 
+                                    disabled={blockButtonFlag} 
+                                    checked={pumpFlag} 
+                                    onChange={() => updatePump()}
+                                />
+                                <div>{blockButtonFlag ? `Wait ${timeLeft} seconds to send another command` : "Available!"}</div>
+                            </div>
+                            }
+                    >
+                    </NewCard>
+                </Cards>
+                <Graph chartData={chartData}/>
+            </div>
+        </MainContainer>
     );
 }

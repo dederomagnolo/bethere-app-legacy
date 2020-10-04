@@ -15,11 +15,11 @@ const MenuBar = () => {
       text: 'Charts',
       path: '/charts'
     },
-    {
+/*     {
       Icon: () => <Adjustments />,
       text: 'Settings',
       path: '/settings'
-    }
+    } */
   ]
   return (
     <Container>
