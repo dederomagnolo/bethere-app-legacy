@@ -10,6 +10,10 @@ export const CardContainer = styled.div`
     align-items: center;
     justify-content: center;
     margin: 5px;
+
+    @media screen and (max-width: 425px){ 
+        width: 100%;
+    }
 `
 
 export const InnerCard = styled.div`

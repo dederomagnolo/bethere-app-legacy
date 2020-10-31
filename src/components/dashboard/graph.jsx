@@ -7,19 +7,20 @@ export const Graph = ({chartData}) => {
         <GraphContainer>
             <ResponsiveLine
                 data={chartData}
-                margin={{ top: 10, right: 30, bottom: 50, left: 50 }}
-                xScale={{ type: 'point' }}
+                margin={{ top: 10, right: 30, bottom: 50, left: 60 }}
+                xScale={{ type: 'point', stacked: true }}
                 yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}
                 axisTop={null}
                 axisRight={null}
                 axisBottom={{
                     orient: 'bottom',
-                    tickSize: 5,
+                    tickSize: 10,
                     tickPadding: 5,
-                    tickRotation: 50,
+                    tickRotation: 80,
                     legendOffset: 20,
-                    legendPosition: 'middle'
+                    legendPosition: 'middle',
                 }}
+                curve="monotoneX"
                 axisLeft={{
                     orient: 'left',
                     tickSize: 5,

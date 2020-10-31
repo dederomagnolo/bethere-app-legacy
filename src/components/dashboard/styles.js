@@ -19,10 +19,13 @@ export const MainContainer = styled.div`
 
 export const GraphContainer = styled.div`
     padding-top: 40px;
-    margin-left: 40px;
-    margin-right: 40px;
     height: 300px;
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 100%;
+
+    @media screen and (max-width: 425px){
+        width: 100%;
+    }
 `

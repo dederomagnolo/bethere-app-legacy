@@ -10,7 +10,7 @@ import {Cards, MainContainer} from './styles';
 import {Graph} from './graph';
 
 const base_channel_url = "https://api.thingspeak.com/channels/695672"
-const bethereUrl = "http://localhost:4000";
+const bethereUrl = "https://bethere-be.herokuapp.com";
 
 const initialState = {
     measures: { 
@@ -27,13 +27,8 @@ export const Dashboard = () => {
     const [timeLeft, setTimeLeft] = useState(null);
     const [measures, setMeasures] = useState(initialState.measures);
     const [chartData, setChartData] = useState([]);
-    
-    const today = moment().format('YYYY-MM-DD');
-    const nextDay = moment().add(1, 'days').format('YYYY-MM-DD');
-
-    const queryStart = `${today}%2000:00:00`;
-    const queryEnd = `${nextDay}%2000:00:00`;
-
+    const [temperatureData, setTemperatureData] = useState([]);
+    const [humidityData, setHumidityData] = useState([]);
     // Week Logics
     /* const lastWeekStartDate = moment().subtract(5, 'days').format("YYYY-MM-DD"); */
     /* const queryStart = `${lastWeekStartDate}%2000:00:00`; */
@@ -64,7 +59,7 @@ export const Dashboard = () => {
             }
             setMeasures(measuresFromRemote);
 
-            if(lastPumpStatus == 1) {
+            if(lastPumpStatus === "1") {
                 setPumpFlag(true);
             } 
         } catch(err) {
@@ -72,39 +67,57 @@ export const Dashboard = () => {
         }
     }
 
-    const updateFields = async (fieldNumber) => {
-        try {
-            const response = await api.get(`${base_channel_url}/fields/${fieldNumber}.json?start=${queryStart}&end=${queryEnd}`);  // 
-            const weekFeed = _.get(response, 'data.feeds');
-            const weekFeedSlice = _.slice(weekFeed, 50);
-            console.log(weekFeedSlice);
-            const data = [];
-            _.each(weekFeed, (entry, index) => {
-                if(isOdd(index)) {
-                    const created_at = _.get(entry, 'created_at');
-                    const fieldMeasure = _.get(entry, `field${fieldNumber}`);
-                    data.push({
-                        "x": moment(created_at).format('hh:mm:ss'),
-                        "y": fieldMeasure && fieldMeasure !== "nan" ? Number(fieldMeasure).toFixed(2) : 31.8
-                    });
-                }
-            });
-
-            setChartData((chartData) => [...chartData, {
-                "id": setMeasureId(fieldNumber),
-                "color": setColorId(fieldNumber),
-                "data": data
-            }]);
-        } catch(err) {
-            console.log(err);
-        }
-    }
-
     useEffect(() => {
         updateDataFromRemote();
+
+        const updateFields = async (fieldNumber) => {
+            const today = moment().format('YYYY-MM-DD');
+            const nextDay = moment().add(1, 'days').format('YYYY-MM-DD');
+            const queryStart = `${today}%2000:00:00`;
+            const queryEnd = `${nextDay}%2000:00:00`;
+
+            try {
+                const response = await api.get(`${base_channel_url}/fields/${fieldNumber}.json?start=${queryStart}&end=${queryEnd}`);  // 
+                const weekFeed = _.get(response, 'data.feeds');
+                const weekFeedSlice = _.slice(weekFeed, 50);
+                const data = [];
+                _.each(weekFeed, (entry, index) => {
+                    // if(isOdd(index)) {
+                        const created_at = _.get(entry, 'created_at');
+                        const fieldMeasure = _.get(entry, `field${fieldNumber}`);
+                        data.push({
+                            "x": moment(created_at).format('hh:mm:ss'),
+                            "y": fieldMeasure && fieldMeasure !== "nan" ? Number(fieldMeasure).toFixed(2) : 31.8
+                        });
+                    // }
+                });
+    
+                setChartData((chartData) => [...chartData, {
+                    "id": setMeasureId(fieldNumber),
+                    "color": setColorId(fieldNumber),
+                    "data": data
+                }]);
+            } catch(err) {
+                console.log(err);
+            }
+        }
+
         updateFields(4);
         updateFields(6);
+/*         updateFields(3);
+        updateFields(5); */
+
     }, []);
+
+    useEffect(() => {
+        console.log(chartData);
+        const temperatureChartData = [chartData[0], chartData[1]];
+/*         const humidityChartData = [chartData[2], chartData[3]];
+        console.log(temperatureChartData); */
+        console.log(temperatureChartData);
+        setTemperatureData(temperatureChartData);
+        /* setHumidityData(humidityChartData); */
+    }, [chartData]);
 
     useEffect(() => {
         if(timeLeft === 0){
@@ -117,7 +130,7 @@ export const Dashboard = () => {
         }, 1000);
 
         return () => clearInterval(intervalId);
-    }, [timeLeft])
+    }, [timeLeft]);
         
     const updatePump = async () => { 
         try{
@@ -170,17 +183,21 @@ export const Dashboard = () => {
                             <div>
                                 <Toggle 
                                     backgroundColorChecked="#3bea64" 
-                                    disabled={blockButtonFlag} 
+                                    disabled={true} 
                                     checked={pumpFlag} 
                                     onChange={() => updatePump()}
                                 />
-                                <div>{blockButtonFlag ? `Wait ${timeLeft} seconds to send another command` : "Available!"}</div>
+                                <div>{blockButtonFlag ? `Wait ${timeLeft} seconds to send another command` : "Disabled!"}</div>
                             </div>
                             }
                     >
                     </NewCard>
                 </Cards>
-                <Graph chartData={chartData}/>
+                {chartData.length > 0 && temperatureData.length > 0 && 
+                    <>
+                        <Graph chartData={chartData}/>
+                        {/* <Graph chartData={humidityData} /> */}
+                    </>}
             </div>
         </MainContainer>
     );
