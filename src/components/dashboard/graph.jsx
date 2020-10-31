@@ -5,6 +5,7 @@ import { GraphContainer } from './styles';
 export const Graph = ({chartData}) => {
     return (
         <GraphContainer>
+            {console.log(chartData)}
             <ResponsiveLine
                 data={chartData}
                 margin={{ top: 10, right: 30, bottom: 50, left: 60 }}
