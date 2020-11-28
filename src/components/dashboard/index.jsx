@@ -8,9 +8,8 @@ import { setColorId, isOdd, setMeasureId } from './utils';
 import {NewCard} from '../newCard';
 import {Cards, MainContainer} from './styles';
 import {Graph} from './graph';
-
-const base_channel_url = "https://api.thingspeak.com/channels/695672"
-const bethereUrl = "https://bethere-be.herokuapp.com";
+import {isFromApp} from './utils';
+import { thingspeakUrl, bethereUrl} from '../../services/configs';
 
 const initialState = {
     measures: { 
@@ -21,10 +20,16 @@ const initialState = {
     }
 }
 
+const pumpTimeSetPoint = 600000;
+
 export const Dashboard = () => {
-    const [pumpFlag, setPumpFlag] = useState(null);
+    const [pumpFlag, setPumpFlag] = useState(false);
     const [blockButtonFlag, setBlockButtonFlag] = useState(false);
     const [timeLeft, setTimeLeft] = useState(null);
+/*     const [minutes, setMinutesLeft] = useState(null);
+    const [seconds, setSecondsLeft] = useState(null); */
+    const [isCommandFromApp, setFromApp] = useState(false);
+    const [pumpCountDown, setPumpCountDown] = useState("");
     const [measures, setMeasures] = useState(initialState.measures);
     const [temperatureData, setTemperatureData] = useState([]);
     const [humidityData, setHumidityData] = useState([]);
@@ -43,9 +48,13 @@ export const Dashboard = () => {
 
     const updateDataFromRemote = async () => {
         try{
-            const pumpStatusResponse = await api.get(`${bethereUrl}/measures/pumpstatus`);
-            const lastFeed = await api.get(`${base_channel_url}/feeds/last.json`);
+            const pumpStatusResponse = await api.get(`${bethereUrl}/commands/pumpstatus`);
+            const lastFeed = await api.get(`${thingspeakUrl}/feeds/last.json`);
             const lastPumpStatus = _.get(pumpStatusResponse, 'data.value');
+            console.log(lastPumpStatus);
+            const commandSentBy = _.get(pumpStatusResponse, 'data.changedFrom');
+            const isCommandFromApp = isFromApp(commandSentBy);
+            setFromApp(isCommandFromApp);
 
             const internalHumidity = _.get(lastFeed, 'data.field3');
             const internalTemperature = _.get(lastFeed, 'data.field4');
@@ -62,6 +71,23 @@ export const Dashboard = () => {
 
             if(lastPumpStatus === "1") {
                 setPumpFlag(true);
+                const today = moment();
+                console.log(moment().format('hh:mm:ss'));
+                const lastPumpUpdate = _.get(pumpStatusResponse, 'data.createdAt');
+                console.log(moment(lastPumpUpdate).format('hh:mm:ss'));
+                const interval = moment(today).diff(lastPumpUpdate);
+                const remainingTime = pumpTimeSetPoint - interval;
+                const d = moment.duration(remainingTime, 'milliseconds');
+                const secs = Math.floor(d.seconds());
+                const mins = Math.floor(d.asMinutes());
+                console.log(`${mins}:${secs}`);
+                setTimeLeft(`${mins}:${secs}`);
+               
+                /* 
+                setSecondsLeft(seconds);
+                const minutes = moment(remainingTime).format('mm');
+                setMinutesLeft(minutes);
+                */
             } 
         } catch(err) {
           console.log(err);
@@ -79,7 +105,7 @@ export const Dashboard = () => {
             const queryEnd = `${nextDay}%2003:00:00`; //check this timezone to use utc
 
             try {
-                const response = await api.get(`${base_channel_url}/fields/${fieldNumber}.json?start=${queryStart}&end=${queryEnd}`);  // 
+                const response = await api.get(`${thingspeakUrl}/fields/${fieldNumber}.json?start=${queryStart}&end=${queryEnd}`);  // 
                 const weekFeed = _.get(response, 'data.feeds');
                 const weekFeedSlice = _.slice(weekFeed, 50);
                 const data = [];
@@ -121,39 +147,55 @@ export const Dashboard = () => {
     }, []);
 
 
-    useEffect(() => {
-        if(timeLeft === 0){
-            setBlockButtonFlag(false);
-            setTimeLeft(null);
-        }
-        if (!timeLeft) return;
+   /*  useEffect(() => {
+        if (!seconds) return;
         const intervalId = setInterval(() => {
-        setTimeLeft(timeLeft - 1);
+            console.log(seconds);
+        setSecondsLeft(Number(seconds) - 1);
         }, 1000);
 
         return () => clearInterval(intervalId);
-    }, [timeLeft]);
+    }, [seconds]);
+
+    useEffect(() => {
+        if (!minutes) return;
+            const intervalId = setInterval(() => {
+            setSecondsLeft(minutes - 1);
+        }, 1000);
+
+        return () => clearInterval(intervalId);
+    }, [minutes]); */
         
     const updatePump = async () => { 
         try{
-            const pumpStatusReponse = await api.get(`${bethereUrl}/measures/pumpstatus`);
+            const pumpStatusReponse = await api.get(`${bethereUrl}/commands/pumpstatus`);
             setBlockButtonFlag(true);
             const pumpStatus = _.get(pumpStatusReponse, 'data.value');
             if(pumpStatus === "1") {
                 await api.post(`${bethereUrl}/send`, {
-                    measureName: "Pump Status",
+                    commandName: "Pump Status",
+                    changedFrom: "App",
                     value: "0"
                 });
                 setPumpFlag(false);
             } else {
-                await api.post(`${bethereUrl}/send`, {
-                    measureName: "Pump Status",
+                const commandRes = await api.post(`${bethereUrl}/send`, {
+                    commandName: "Pump Status",
+                    changedFrom: "App",
                     value: "1"
-                });  
+                });
                 setPumpFlag(true);
+                const createdAt = _.get(commandRes, 'data.createdAt');
+                const today = moment();
+                const interval = moment(today).diff(createdAt);
+                const remainingTime = pumpTimeSetPoint - interval;
+                const d = moment.duration(remainingTime, 'milliseconds');
+                const secs = Math.floor(d.seconds());
+                const mins = Math.floor(d.asMinutes());
+                console.log(`${mins}:${secs}`);
+                setTimeLeft(`${mins}:${secs}`);
             }
-            
-            setTimeLeft(11);
+            setBlockButtonFlag(false);
         } catch(err) {
           console.log(err);
         }    
@@ -161,8 +203,6 @@ export const Dashboard = () => {
 
     return (
         <MainContainer>
-            {console.log(temperatureData)}
-            {console.log(humidityData)}
             <Header title="Dashboard"/>
             <div>
                 {/* <span style={{fontSize: "20px"}}>Hello! Your garden looks good today:</span> */}
@@ -195,11 +235,14 @@ export const Dashboard = () => {
                             <div>
                                 <Toggle 
                                     backgroundColorChecked="#3bea64" 
-                                    disabled={true} 
+                                    disabled={blockButtonFlag} 
                                     checked={pumpFlag} 
                                     onChange={() => updatePump()}
                                 />
-                                <div>{blockButtonFlag ? `Wait ${timeLeft} seconds to send another command` : "Disabled!"}</div>
+                                {!pumpFlag 
+                                    ? <div>{"Available!"}</div>
+                                    : <div>Remaining time: {timeLeft} mins</div> 
+                                }
                             </div>
                             }
                     >
