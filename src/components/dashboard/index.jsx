@@ -115,7 +115,7 @@ export const Dashboard = () => {
                         const fieldMeasure = _.get(entry, `field${fieldNumber}`);
                         data.push({
                             "x": moment(created_at).format('HH:mm'),
-                            "y": fieldMeasure && fieldMeasure !== "nan" ? Number(fieldMeasure).toFixed(2) : fieldMeasure
+                            "y": fieldMeasure && fieldMeasure !== "nan" ? Number(fieldMeasure).toFixed(2) : "30"
                         });
                     // }
                 });
