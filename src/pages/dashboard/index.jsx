@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from '../header';
 import Toggle from 'react-styled-toggle';
-import api from '../../services';
+import { Header } from '../../components/header';
 import * as _ from 'lodash';
 import moment from 'moment';
+import api from '../../services';
 import { setColorId, isOdd, setMeasureId } from './utils';
-import {NewCard} from '../newCard';
+import {NewCard} from '../../components/newCard';
 import {Cards, MainContainer} from './styles';
 import {Graph} from './graph';
 import {isFromApp} from './utils';
