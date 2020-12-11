@@ -51,11 +51,13 @@ export const Dashboard = () => {
             const pumpStatusResponse = await api.get(`${bethereUrl}/commands/pumpstatus`);
             const lastFeed = await api.get(`${thingspeakUrl}/feeds/last.json`);
             const lastPumpStatus = _.get(pumpStatusResponse, 'data.value');
-            console.log(lastPumpStatus);
-            const commandSentBy = _.get(pumpStatusResponse, 'data.changedFrom');
-            const isCommandFromApp = isFromApp(commandSentBy);
-            setFromApp(isCommandFromApp);
-
+            if(pumpStatusResponse) {
+                const commandSentBy = _.get(pumpStatusResponse, 'data.changedFrom');
+                const isCommandFromApp = isFromApp(commandSentBy);
+                setFromApp(isCommandFromApp);
+            }
+            
+        
             const internalHumidity = _.get(lastFeed, 'data.field3');
             const internalTemperature = _.get(lastFeed, 'data.field4');
             const externalHumidity = _.get(lastFeed, 'data.field5');
