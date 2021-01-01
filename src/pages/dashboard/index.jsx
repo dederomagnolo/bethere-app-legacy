@@ -48,7 +48,9 @@ export const Dashboard = () => {
 
     const updatePumpFromRemote = async () => {
         try{
-            const pumpStatusResponse = await api.get(`${bethereUrl}/commands/pumpstatus`);
+            const pumpStatusResponse = await api.post(`${bethereUrl}/commands/laststatus`, {
+                commandName: "Pump Status"
+            });
             
             const lastPumpStatus = _.get(pumpStatusResponse, 'data.value');
             if(pumpStatusResponse) {
@@ -178,7 +180,9 @@ export const Dashboard = () => {
         
     const updatePump = async () => { 
         try{
-            const pumpStatusReponse = await api.get(`${bethereUrl}/commands/pumpstatus`);
+            const pumpStatusReponse = await api.post(`${bethereUrl}/commands/laststatus` , {
+                commandName: "Pump Status"
+            });
             setBlockButtonFlag(true);
             const pumpStatus = _.get(pumpStatusReponse, 'data.value');
             if(pumpStatus === "1") {
