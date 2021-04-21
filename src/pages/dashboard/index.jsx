@@ -115,10 +115,10 @@ export const Dashboard = () => {
             const today = moment().format('YYYY-MM-DD');
             const nextDay = moment().add(1, 'days').format('YYYY-MM-DD');
 
-            //const queryStart = `${today}%2003:00:00`;
-            //const queryEnd = `${nextDay}%2003:00:00`; //check this timezone to use utc
-            const queryStart = "2020-12-31%2003:00:00"
-            const queryEnd = "2021-01-01%2003:00:00"
+            const queryStart = `${today}%2003:00:00`;
+            const queryEnd = `${nextDay}%2003:00:00`; //check this timezone to use utc
+            /* const queryStart = "2020-12-31%2003:00:00"
+            const queryEnd = "2021-01-01%2003:00:00" */
 
             try {
                 const response = await api.get(`${thingspeakUrl}/fields/${fieldNumber}.json?start=${queryStart}&end=${queryEnd}`);  // 
