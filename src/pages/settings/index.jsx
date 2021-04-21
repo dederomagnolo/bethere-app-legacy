@@ -1,46 +1,41 @@
 import React, {useEffect, useState} from 'react';
+import Toggle from 'react-styled-toggle';
 import * as _ from 'lodash';
+import Select from 'react-select'
 import '../../styles/styles.css';
 import api from '../../services';
 import {bethereUrl} from '../../services/configs';
 import {Container} from 'react-grid-system';
 import {Header} from '../../components/header';
-import Toggle from 'react-styled-toggle';
-import {Option, OptionLabel, Button, Options} from './styles';
-import { ThreeBounce } from 'styled-spinkit';
+
+import {Option, OptionLabel, Button, Options, SubOptionLabel, Section, Input} from './styles';
+import commands from '../../services/commands';
+
+import ResetOption from './reset';
 
 export const Settings = () => {
     const [backlightStatus, setBacklightStatus] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [reseting, setReseting] = useState(false);
-
-    const handleReset = async() => {
-        setLoading(true);
-        setReseting(true);
-        const res = await api.post(`${bethereUrl}/send`, {
-            commandName: "Reset",
-            changedFrom: "App",
-            value: "RESET_ESP"
-        });
-
-        setTimeout(() => {
-            setLoading(false);
-            setReseting(false);
-        }, 10000);
+    const timeOptions = [];
+    for(let i = 0; i < 24 ; i++) {
+        timeOptions.push({
+            value: `${i}`, label: `${i}h`
+        })
     }
+
     const handleSendCommand = async () => {
         setLoading(true);
         try {
             const lastBackLightResponse = await api.post(`${bethereUrl}/commands/laststatus` , {
-                commandName: "Backlight"
+                commandName: commands.BACKLIGHT.NAME
             });
             const lastStatus = _.get(lastBackLightResponse, 'data.value');
 
-            if(lastStatus === "LCD_ON") {
+            if(lastStatus === commands.BACKLIGHT.ON) {
                 const offRes = await api.post(`${bethereUrl}/send`, {
-                    commandName: "Backlight",
+                    commandName: commands.BACKLIGHT.NAME,
                     changedFrom: "App",
-                    value: "LCD_OFF"
+                    value: commands.BACKLIGHT.OFF
                 });
 
                 if(offRes) { 
@@ -48,9 +43,9 @@ export const Settings = () => {
                 }
             } else {
                 const onRes = await api.post(`${bethereUrl}/send`, {
-                    commandName: "Backlight",
+                    commandName: commands.BACKLIGHT.NAME,
                     changedFrom: "App",
-                    value: "LCD_ON"
+                    value: commands.BACKLIGHT.ON
                 });
 
                 if(onRes) {
@@ -69,11 +64,11 @@ export const Settings = () => {
     useEffect(() => {
         const fetchBacklight = async () => {
             const res = await api.post(`${bethereUrl}/commands/laststatus` , {
-                commandName: "Backlight"
+                commandName: commands.BACKLIGHT.NAME
             });
             const backlightStatusValue = _.get(res, 'data.value');
             console.log(res);
-            if(backlightStatusValue === "LCD_ON") {
+            if(backlightStatusValue === commands.BACKLIGHT.ON) {
                 setBacklightStatus(true);
             } else {
                 setBacklightStatus(false);
@@ -86,27 +81,48 @@ export const Settings = () => {
         <Container style={{height: '100%', minWidth: '80%'}}>
             <Header title="Settings"/>
             <Options>
-                <Option className="backLightOption">
-                    <OptionLabel>
-                        LCD Backlight
-                    </OptionLabel>
-                    <Toggle
-                        disabled={loading}
-                        checked={backlightStatus} 
-                        onChange={() => handleSendCommand()}
-                    />
-                </Option>
-                <Option className="resetOption">
-                    <p>
-                        Your local station can take around 10 seconds to reboot the system and estabilish internet connection again.
-                    </p>
-                    <p>
-                        Check your internet connection before rebooting.
-                    </p>
-                    <Button disabled={loading} onClick={() => handleReset()} >  
-                        {reseting ? <ThreeBounce color={'white'} className="loader"/> : "Reset"}
-                    </Button>
-                </Option>
+                <Section>
+                    <Option className="backLightOption">
+                        <OptionLabel>
+                            LCD Backlight
+                        </OptionLabel>
+                        <Toggle
+                            disabled={loading}
+                            checked={backlightStatus} 
+                            onChange={() => handleSendCommand()}
+                        />
+                    </Option>
+                    <Option className="selectBackLightTime">
+                        <SubOptionLabel>
+                            Default time to turn backlight off
+                        </SubOptionLabel>
+                        <Select
+                            options={timeOptions} 
+                        />
+                        <SubOptionLabel>
+                            Default time to turn backlight on
+                        </SubOptionLabel>
+                        <Select
+                            options={timeOptions} 
+                        />
+                    </Option>
+                </Section>
+                <Section>
+                    <Option>
+                        <OptionLabel>
+                            Manual Pump Timer
+                        </OptionLabel>
+                        <Input 
+                            placeholder={"minutes"} 
+                            type="number"
+                            min={0}
+                            max={1}
+                        />
+                    </Option>
+                </Section>
+                <Section>
+                    <ResetOption loading={loading} setLoading={setLoading} />
+                </Section>
             </Options>
         </Container>        
     );

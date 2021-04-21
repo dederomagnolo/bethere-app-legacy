@@ -1,4 +1,4 @@
-const commands = {
+const COMMANDS = {
     BACKLIGHT: {
         NAME: "Backlight",
         ON: "LCD_ON",
@@ -6,8 +6,12 @@ const commands = {
     },
     PUMP: {
         NAME: "Pump Status",
-        ON: "1",
-        OFF: "0"
+        ON: "MP1",
+        OFF: "MP0"
+    },
+    MEASURE_INTERVAL:{
+        NAME: "Measure Interval",
+        COMMAND: "MEASURE_INTERVAL",
     },
     RESET: {
         NAME: "Reset",
@@ -15,4 +19,4 @@ const commands = {
     }
 }
 
-export default commands;
+export default COMMANDS;
