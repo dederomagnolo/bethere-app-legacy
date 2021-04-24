@@ -21,7 +21,7 @@ const initialState = {
     }
 }
 
-const pumpTimeSetPoint = 600000;
+const pumpTimeSetPoint = 1200000;
 
 export const Dashboard = () => {
     const [pumpFlag, setPumpFlag] = useState(false);
@@ -168,7 +168,6 @@ export const Dashboard = () => {
 
     }, []);
 
-
    /*  useEffect(() => {
         if (!seconds) return;
         const intervalId = setInterval(() => {
@@ -198,7 +197,7 @@ export const Dashboard = () => {
             console.log(pumpStatus);
             if(pumpStatus === COMMANDS.PUMP.ON) {
                 await api.post(`${bethereUrl}/send`, {
-                    commandName: "Pump Status",
+                    commandName: COMMANDS.PUMP.NAME,
                     changedFrom: "App",
                     value: COMMANDS.PUMP.OFF
                 });
@@ -250,18 +249,6 @@ export const Dashboard = () => {
                             setShowTemperatureChart(false);
                         }}
                     />
-                </Cards>
-                <Cards>
-                    {/* <NewCard 
-                            label={"CO2 (ppm)"} 
-                            icon={"asterisk"} 
-                            internalMeasure={measures.internalHumidity} 
-                            externalMeasure={measures.externalHumidity} 
-                            onClick={() => {
-                                setShowHumidityChart(true)
-                                setShowTemperatureChart(false);
-                            }}
-                    /> */}
                     <NewCard 
                         label={"Pump Control"} 
                         icon={"cog"}
@@ -283,6 +270,18 @@ export const Dashboard = () => {
                         >
                     </NewCard>
                 </Cards>
+                {/* <Cards>
+                    <NewCard 
+                            label={"CO2 (ppm)"} 
+                            icon={"asterisk"} 
+                            internalMeasure={measures.internalHumidity} 
+                            externalMeasure={measures.externalHumidity} 
+                            onClick={() => {
+                                setShowHumidityChart(true)
+                                setShowTemperatureChart(false);
+                            }}
+                    />
+                </Cards> */}
                 {showTemperatureChart && temperatureData.length > 0 && <Graph chartData={temperatureData}/>}
                 {showHumidityChart && humidityData.length > 0 && <Graph chartData={humidityData}/>}
                 {/* {chartData.length > 0 && <Graph chartData={temperatureData}/>} */}
