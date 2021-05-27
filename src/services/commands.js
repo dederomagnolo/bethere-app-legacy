@@ -4,12 +4,15 @@ const COMMANDS = {
         ON: 'MP1',
         OFF: 'MP0'
     },
-    WATERING_ROUTINE: {
-        NAME: 'Watering Routine',
-        MODE_ON: 'WR_ON',
-        MODE_OFF: 'WR_OFF',
-        PUMP_ON: 'WR_PUMP_ON',
-        PUMP_OFF: 'WR_PUMP_OFF'
+    WATERING_ROUTINE_MODE: {
+        NAME: 'Watering Routine Mode',
+        ON: 'WR_ON',
+        OFF: 'WR_OFF',
+    },
+    WATERING_ROUTINE_PUMP: {
+        NAME: 'Watering Routine Pump',
+        ON: 'WR_PUMP_ON',
+        OFF: 'WR_PUMP_OFF'
     },
     BACKLIGHT: {
         NAME: 'Backlight',
@@ -17,7 +20,11 @@ const COMMANDS = {
         OFF: 'LCD_OFF'
     },
     MEASURE_INTERVAL: 'Measure Interval',
-    RESET: 'Reset'
+    RESET: 'Reset',
+    SETTINGS: {
+        NAME: 'Settings',
+        ON: 'SETTINGS'
+    }
 }
 
 export default COMMANDS;

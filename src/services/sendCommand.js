@@ -5,54 +5,53 @@ const APP = 'App';
 
 const payloadList = {
     MANUAL_PUMP_ON: {
-        commandName: COMMANDS.MANUAL_PUMP.NAME,
-        changedFrom: APP,
-        value: COMMANDS.MANUAL_PUMP.ON
+        categoryName: COMMANDS.MANUAL_PUMP.NAME,
+        commandName: COMMANDS.MANUAL_PUMP.ON,
     },
     MANUAL_PUMP_OFF: {
-        commandName: COMMANDS.MANUAL_PUMP.NAME,
-        changedFrom: APP,
-        value: COMMANDS.MANUAL_PUMP.OFF
+        categoryName: COMMANDS.MANUAL_PUMP.NAME,
+        commandName: COMMANDS.MANUAL_PUMP.OFF,
     },
     WATERING_AUTO_ON: {
-        commandName: COMMANDS.WATERING_ROUTINE.NAME,
-        changedFrom: APP,
-        value: COMMANDS.WATERING_ROUTINE.MODE_ON
+        categoryName: COMMANDS.WATERING_ROUTINE_MODE.NAME,
+        commandName: COMMANDS.WATERING_ROUTINE_MODE.ON,
     },
     WATERING_AUTO_OFF: {
-        commandName: COMMANDS.WATERING_ROUTINE.NAME,
-        changedFrom: APP,
-        value: COMMANDS.WATERING_ROUTINE.MODE_OFF
+        categoryName: COMMANDS.WATERING_ROUTINE_MODE.NAME,
+        commandName: COMMANDS.WATERING_ROUTINE_MODE.OFF,
     },
     AUTO_PUMP_ON: {
-        commandName: COMMANDS.WATERING_ROUTINE.NAME,
-        changedFrom: APP,
-        value: COMMANDS.WATERING_ROUTINE.PUMP_ON
+        categoryName: COMMANDS.WATERING_ROUTINE_PUMP.NAME,
+        commandName: COMMANDS.WATERING_ROUTINE_PUMP.ON,
     },
     AUTO_PUMP_OFF: {
-        commandName: COMMANDS.WATERING_ROUTINE.NAME,
-        changedFrom: APP,
-        value: COMMANDS.WATERING_ROUTINE.PUMP_OFF
+        categoryName: COMMANDS.WATERING_ROUTINE_PUMP.NAME,
+        commandName: COMMANDS.WATERING_ROUTINE_PUMP.OFF,
     },
     BACKLIGHT_ON: {
-        commandName: COMMANDS.BACKLIGHT.NAME,
-        changedFrom: APP,
-        value: COMMANDS.BACKLIGHT.ON
+        categoryName: COMMANDS.BACKLIGHT.NAME,
+        commandName: COMMANDS.BACKLIGHT.ON,
     },
     BACKLIGHT_OFF: {
-        commandName: COMMANDS.BACKLIGHT.NAME,
-        changedFrom: APP,
-        value: COMMANDS.BACKLIGHT.OFF
+        categoryName: COMMANDS.BACKLIGHT.NAME,
+        commandName: COMMANDS.BACKLIGHT.OFF,
+    },
+    SETTINGS_ON: {
+        categoryName: COMMANDS.SETTINGS.NAME,
+        commandName: COMMANDS.SETTINGS.ON,
     }
 }
 
-async function sendCommand (command) {
+async function sendCommand (command, value) {
     const payloadToSend = payloadList[command];
-    console.log(payloadToSend);
     return await callApi(
         'POST',
         '/send',
-        {...payloadToSend}
+        {
+            ...payloadToSend, 
+            value,
+            changedFrom: APP
+        }
     )
 }
 

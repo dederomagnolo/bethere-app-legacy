@@ -13,7 +13,6 @@ import {setColorId, isOdd, setMeasureId} from './utils';
 import {NewCard} from '../../components/newCard';
 import {Cards, MainContainer, DateContainer} from './styles';
 import {Graph} from './graph';
-import {isFromApp} from './utils';
 import {thingspeakUrl, bethereUrl} from '../../services/configs';
 import {getUserId, getUserDevices} from '../../store/user/selectors';
 import {updateDeviceSettings} from '../../store/user/actions';
@@ -40,7 +39,6 @@ export const Dashboard = () => {
     const [blockButtonFlag, setBlockButtonFlag] = useState(false);
     const [timeLeft, setTimeLeft] = useState(null);
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [isCommandFromApp, setFromApp] = useState(false);
     const [measures, setMeasures] = useState(initialState.measures);
     const [temperatureData, setTemperatureData] = useState([]);
     const [humidityData, setHumidityData] = useState([]);
@@ -48,7 +46,7 @@ export const Dashboard = () => {
     const [showHumidityChart, setShowHumidityChart] = useState(false);
     const { formatDate, parseDate } = MomentLocaleUtils;
     const dispatch = useDispatch();
-    const wateringRoutineSettings = _.get(userDevices, '[0].settings[0].wateringRoutine')
+    const wateringRoutineSettings = _.get(userDevices, '[0].settings[0].wateringRoutine');
     const wateringEnabled = _.get(wateringRoutineSettings, 'enabled');
     const autoWateringDuration = _.get(wateringRoutineSettings, 'duration');
 
@@ -87,44 +85,29 @@ export const Dashboard = () => {
 
     const updatePumpFromRemote = async () => {
         try{
-            const pumpStatusResponse = await api.post(`${bethereUrl}/commands/laststatus`, {
-                commandName: COMMANDS.MANUAL_PUMP.NAME
-            });
+            let remainingTime;
+            const lastStatusAll = await api.post(`${bethereUrl}/commands/laststatus/all`);
+            const lastAutoPumpStatus = _.get(lastStatusAll, 'data.autoPump.commandName');
+            const lastPumpStatus = _.get(lastStatusAll, 'data.manualPump.commandName');
 
-            const autoPumpStatusResponse = await api.post(`${bethereUrl}/commands/laststatus`, {
-                commandName: COMMANDS.WATERING_ROUTINE.NAME
-            });
-            
-            const lastAutoPumpStatus = _.get(autoPumpStatusResponse, 'data.value');
-            const lastPumpStatus = _.get(pumpStatusResponse, 'data.value');
-            
-            if(pumpStatusResponse) {
-                const commandSentBy = _.get(pumpStatusResponse, 'data.changedFrom');
-                const isCommandFromApp = isFromApp(commandSentBy);
-                setFromApp(isCommandFromApp);
-            }
-
-            if(lastAutoPumpStatus === COMMANDS.WATERING_ROUTINE.PUMP_ON){
+            if(lastAutoPumpStatus === COMMANDS.WATERING_ROUTINE_PUMP.ON){
                 setAutoPumpFlag(true);
                 setPumpFlag(true);
-                const remainingTime = calculateRemainingTime(lastAutoPumpStatus); 
-                if(remainingTime.mins < 0 || remainingTime.secs < 0) {
-                    setAutoPumpFlag(false);
-                    setPumpFlag(false);
-                } else {
-                    setTimeLeft(`${remainingTime.mins}:${remainingTime.secs}`);
-                }
+                remainingTime = calculateRemainingTime(lastAutoPumpStatus); 
             }
 
             if(lastPumpStatus === COMMANDS.MANUAL_PUMP.ON) {
                 setPumpFlag(true);
-                const remainingTime = calculateRemainingTime(lastPumpStatus);            
-                if(remainingTime.mins < 0 || remainingTime.secs < 0) {
-                    setPumpFlag(false);
-                } else {
-                    setTimeLeft(`${remainingTime.mins}:${remainingTime.secs}`);
-                }
+                remainingTime = calculateRemainingTime(lastPumpStatus); 
             } 
+
+            if(remainingTime.mins < 0 || remainingTime.secs < 0) {
+                setAutoPumpFlag(false);
+                setPumpFlag(false);
+            } else {
+                setTimeLeft(`${remainingTime.mins}:${remainingTime.secs}`);
+            }
+
         } catch(err) {
           console.log(err);
         }
@@ -181,7 +164,7 @@ export const Dashboard = () => {
                         });
                     // }
                 });
-                console.log(fieldNumber);
+
                 if(fieldNumber === 4 || fieldNumber === 6) { // internal temperature and external temperature
                     setTemperatureData((temperatureData) => [...temperatureData, {
                         "id" : setMeasureId(fieldNumber),
@@ -195,7 +178,6 @@ export const Dashboard = () => {
                         "data": data
                     }]);
                 }
-
             } catch(err) {
                 console.log(err);
             }
@@ -218,11 +200,11 @@ export const Dashboard = () => {
         try {
             if(autoPumpFlag) {
                 const pumpStatusReponse = await api.post(`${bethereUrl}/commands/laststatus` , {
-                    commandName: COMMANDS.WATERING_ROUTINE.NAME
+                    categoryName: COMMANDS.WATERING_ROUTINE_PUMP.NAME
                 });
                 setBlockButtonFlag(true);
                 const autoPumpStatusFromRemote = _.get(pumpStatusReponse, 'data.value');
-                if(autoPumpStatusFromRemote === COMMANDS.WATERING_ROUTINE.ON) {
+                if(autoPumpStatusFromRemote === COMMANDS.WATERING_ROUTINE_PUMP.ON) {
                     await sendCommand('AUTO_PUMP_OFF')
                     setAutoPumpFlag(false);
                 } else {
@@ -241,10 +223,11 @@ export const Dashboard = () => {
                 setBlockButtonFlag(false);
             } else {
                 const pumpStatusReponse = await api.post(`${bethereUrl}/commands/laststatus` , {
-                    commandName: COMMANDS.MANUAL_PUMP.NAME
+                    categoryName: COMMANDS.MANUAL_PUMP.NAME
                 });
                 setBlockButtonFlag(true);
-                const pumpStatus = _.get(pumpStatusReponse, 'data.value');
+                const pumpStatus = _.get(pumpStatusReponse, 'data.commandName');
+                console.log(pumpStatus);
                 if(pumpStatus === COMMANDS.MANUAL_PUMP.ON) {
                     await sendCommand('MANUAL_PUMP_OFF')
                     setPumpFlag(false);

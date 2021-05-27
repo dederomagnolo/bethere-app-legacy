@@ -28,6 +28,7 @@ import ResetOption from './reset';
 import { getUserDevices, getUserId } from '../../store/user/selectors';
 import {updateDeviceSettings} from '../../store/user/actions';
 import sendCommand from '../../services/sendCommand';
+import {minutesToMilliseconds, secondsToMilliseconds} from '../../utils/functions';
 
 export const Settings = () => {
     const userDevices = useSelector(getUserDevices);
@@ -77,23 +78,43 @@ export const Settings = () => {
     const handleEditRoutine = async () => {
         try {
             setLoading(true);
+            const {
+                localMeasureInterval, 
+                remoteMeasureInterval, 
+                pumpTimer, 
+                backlight, 
+            } = deviceSettings;
+
+            const { 
+                startTime,
+                endTime,
+                interval,
+                duration
+            } = routinePayload
+
             const editSettingsResponse = await api.post(`${bethereUrl}/settings/edit` , {
                 userId,
                 deviceId: selectedDevice,
                 settingsId: _.get(deviceSettings, '_id'),
-                startTime: routinePayload.startTime,
-                endTime: routinePayload.endTime,
-                interval: routinePayload.interval,
-                duration: routinePayload.duration,
-                enabled: showWorkingRoutineOptions,
-                localMeasureInterval: deviceSettings.localMeasureInterval,
-                remoteMeasureInterval: deviceSettings.remoteMeasureInterval,
-                pumpTimer: deviceSettings.pumpTimer,
-                backligh: deviceSettings.pumpTimer
+                localMeasureInterval,
+                remoteMeasureInterval,
+                pumpTimer,
+                backlight,
+                wateringRoutine: {
+                    startTime: startTime,
+                    endTime: endTime,
+                    interval: interval,
+                    duration: duration,
+                    enabled: showWorkingRoutineOptions
+                }
             });
 
             if(showWorkingRoutineOptions) {
                 await sendCommand('WATERING_AUTO_ON');
+                await sendCommand(
+                    'SETTINGS_ON', 
+                    `${backlight},${minutesToMilliseconds(pumpTimer)},${secondsToMilliseconds(localMeasureInterval)},${minutesToMilliseconds(remoteMeasureInterval)},${startTime},${endTime},${minutesToMilliseconds(duration)},${minutesToMilliseconds(interval)}`
+                );
             }
 
             if(editSettingsResponse) {
@@ -118,7 +139,7 @@ export const Settings = () => {
         setLoading(true);
         try {
             const lastBackLightResponse = await api.post(`${bethereUrl}/commands/laststatus` , {
-                commandName: COMMANDS.BACKLIGHT.NAME
+                categoryName: COMMANDS.BACKLIGHT.NAME
             });
             const lastStatus = _.get(lastBackLightResponse, 'data.value');
 
@@ -134,7 +155,6 @@ export const Settings = () => {
                     setBacklightStatus(true);
                 }
             }
-
             setTimeout(() => {
                 setLoading(false);
             }, 3000);
@@ -155,7 +175,7 @@ export const Settings = () => {
     useEffect(() => {
         const fetchBacklight = async () => {
             const res = await api.post(`${bethereUrl}/commands/laststatus` , {
-                commandName: COMMANDS.BACKLIGHT.NAME
+                categoryName: COMMANDS.BACKLIGHT.NAME
             });
             const backlightStatusValue = _.get(res, 'data.value');
             if(backlightStatusValue === COMMANDS.BACKLIGHT.ON) {
