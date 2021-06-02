@@ -288,6 +288,10 @@ export const Settings = () => {
                                     <SubOption>
                                         <SubOptionLabel>Start time:</SubOptionLabel>
                                         <Select
+                                            styles={{container: (provided) => ({
+                                                ...provided,
+                                                width: '130px'
+                                            })}}
                                             onChange={(selected) => {
 
                                                 setRoutinePayload({
@@ -301,6 +305,10 @@ export const Settings = () => {
                                         />
                                         <SubOptionLabel className="secondSubOption">End time:</SubOptionLabel>
                                         <Select
+                                            styles={{container: (provided) => ({
+                                                ...provided,
+                                                width: '130px'
+                                            })}}
                                             onChange={(selected) => setRoutinePayload({
                                                 ...routinePayload,
                                                 endTime: selected.value

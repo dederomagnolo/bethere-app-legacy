@@ -4,6 +4,7 @@ import Toggle from 'react-styled-toggle';
 import {LeftArrow, RightArrow} from '@styled-icons/boxicons-regular';
 import * as _ from 'lodash';
 import moment from 'moment';
+import {Pulse} from 'styled-spinkit';
 import {useSelector, useDispatch} from 'react-redux';
 import DayPickerInput from 'react-day-picker/DayPickerInput';
 import MomentLocaleUtils from 'react-day-picker/moment';
@@ -51,6 +52,7 @@ export const Dashboard = () => {
     const wateringRoutineSettings = _.get(userDevices, '[0].settings[0].wateringRoutine');
     const wateringEnabled = _.get(wateringRoutineSettings, 'enabled');
     const autoWateringDuration = _.get(wateringRoutineSettings, 'duration'); // in minutes always
+    const [loading, setLoading] = useState(false);
 
     const handleDateChange = (date) => {
         const momentDate = moment(date);
@@ -81,7 +83,7 @@ export const Dashboard = () => {
 
     useEffect(() => {
         const updatePumpFromRemote = async () => {
-            try{
+            try {
                 let remainingTime;
                 const lastStatusAll = await api.post(`${bethereUrl}/commands/laststatus/all`);
                 const lastAutoPumpStatus = _.get(lastStatusAll, 'data.autoPump.commandName');
@@ -178,9 +180,12 @@ export const Dashboard = () => {
 
         const getLocalStationStatus = async () => {
             try {
+                setLoading(true);
                 const localStationStatus = await api.post(`${bethereUrl}/ls-status`, {deviceSerialKey});
                 setLocalStationStatus(_.get(localStationStatus, 'data.isDeviceConnected'));
+                setLoading(false);
             } catch (err) {
+                setLoading(false);
                 console.log(err);
             }
         }
@@ -202,8 +207,42 @@ export const Dashboard = () => {
 
     }, [selectedDate]);
         
-    const updatePump = async () => { 
+    const updatePump = async () => {
         try {
+        setBlockButtonFlag(true);
+        const lastStatusAll = await api.post(`${bethereUrl}/commands/laststatus/all`);
+
+        if(lastStatusAll) {
+            const lastAutoPumpStatus = _.get(lastStatusAll, 'data.autoPump.commandName');
+            const lastPumpStatus = _.get(lastStatusAll, 'data.manualPump.commandName');
+            console.log(lastAutoPumpStatus);
+            if(lastAutoPumpStatus === COMMANDS.WATERING_ROUTINE_PUMP.ON) {
+                await sendCommand('AUTO_PUMP_OFF');
+                setBlockButtonFlag(false);
+                return setPumpFlag(false);
+            }
+            
+            if(lastPumpStatus === COMMANDS.MANUAL_PUMP.ON) {
+                console.log("aqui");
+                await sendCommand('MANUAL_PUMP_OFF');
+                setBlockButtonFlag(false);
+                return setPumpFlag(false);
+            } 
+            
+            if(lastPumpStatus === COMMANDS.MANUAL_PUMP.OFF) {
+                await sendCommand('MANUAL_PUMP_ON');
+                setBlockButtonFlag(false);
+                return setPumpFlag(true);
+            }
+        }
+ 
+        } catch(err) {
+            console.log(err);
+        }
+        
+        console.log(autoPumpFlag);
+        console.log(pumpFlag);
+        /* try {
             if(autoPumpFlag) {
                 const pumpStatusReponse = await api.post(`${bethereUrl}/commands/laststatus` , {
                     categoryName: COMMANDS.WATERING_ROUTINE_PUMP.NAME
@@ -228,9 +267,6 @@ export const Dashboard = () => {
                 }
                 setBlockButtonFlag(false);
             } else {
-                const pumpStatusReponse = await api.post(`${bethereUrl}/commands/laststatus` , {
-                    categoryName: COMMANDS.MANUAL_PUMP.NAME
-                });
                 setBlockButtonFlag(true);
                 const pumpStatus = _.get(pumpStatusReponse, 'data.commandName');
                 console.log(pumpStatus);
@@ -245,7 +281,7 @@ export const Dashboard = () => {
             }
         } catch(err) {
           console.log(err);
-        }    
+        }     */
     }
 
     const renderAutoWateringLabel = () => {
@@ -293,7 +329,7 @@ export const Dashboard = () => {
                         icon={"cog"}
                         pump={true}
                         children={
-                            <div style={{display: 'flex', flexDirection: "column" , alignItems: 'center'}}>
+                           loading ? <Pulse size={20} /> : <div style={{display: 'flex', flexDirection: "column" , alignItems: 'center'}}>
                                 <div>
                                     Auto: {renderAutoWateringLabel()}
                                 </div>
@@ -301,7 +337,7 @@ export const Dashboard = () => {
                                     <Toggle 
                                         backgroundColorChecked="#3bea64" 
                                         disabled={!localStationStatus || blockButtonFlag} 
-                                        checked={pumpFlag || autoPumpFlag} 
+                                        checked={pumpFlag} 
                                         onChange={() => updatePump()}
                                     />
                                 </div>
