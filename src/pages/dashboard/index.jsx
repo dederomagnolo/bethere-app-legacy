@@ -239,49 +239,6 @@ export const Dashboard = () => {
         } catch(err) {
             console.log(err);
         }
-        
-        console.log(autoPumpFlag);
-        console.log(pumpFlag);
-        /* try {
-            if(autoPumpFlag) {
-                const pumpStatusReponse = await api.post(`${bethereUrl}/commands/laststatus` , {
-                    categoryName: COMMANDS.WATERING_ROUTINE_PUMP.NAME
-                });
-                setBlockButtonFlag(true);
-                const autoPumpStatusFromRemote = _.get(pumpStatusReponse, 'data.value');
-                if(autoPumpStatusFromRemote === COMMANDS.WATERING_ROUTINE_PUMP.ON) {
-                    await sendCommand('AUTO_PUMP_OFF')
-                    setAutoPumpFlag(false);
-                } else {
-                    // turn on manual - disable watering routine
-                    await sendCommand('WATERING_AUTO_OFF');
-                
-                    // update settings in store
-                    await api.post(`${bethereUrl}/settings` , {
-                        deviceId: selectedDevice
-                    });
-                    dispatch(updateDeviceSettings(selectedDevice));
-                    // send command to turn on - manual
-                    await sendCommand('MANUAL_PUMP_ON');
-                    setPumpFlag(true);
-                }
-                setBlockButtonFlag(false);
-            } else {
-                setBlockButtonFlag(true);
-                const pumpStatus = _.get(pumpStatusReponse, 'data.commandName');
-                console.log(pumpStatus);
-                if(pumpStatus === COMMANDS.MANUAL_PUMP.ON) {
-                    await sendCommand('MANUAL_PUMP_OFF')
-                    setPumpFlag(false);
-                } else {
-                    await sendCommand('MANUAL_PUMP_ON');
-                    setPumpFlag(true);
-                }
-                setBlockButtonFlag(false);
-            }
-        } catch(err) {
-          console.log(err);
-        }     */
     }
 
     const renderAutoWateringLabel = () => {
