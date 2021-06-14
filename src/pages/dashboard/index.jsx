@@ -6,15 +6,16 @@ import * as _ from 'lodash';
 import moment from 'moment';
 import {Pulse} from 'styled-spinkit';
 import {useSelector, useDispatch} from 'react-redux';
+import {useTranslate} from 'react-translate';
 import DayPickerInput from 'react-day-picker/DayPickerInput';
 import MomentLocaleUtils from 'react-day-picker/moment';
 import api from '../../services';
+import {thingspeakUrl, bethereUrl} from '../../services/configs';
 import {Header} from '../../components/header';
 import {setColorId, isOdd, setMeasureId} from './utils';
 import {NewCard} from '../../components/newCard';
 import {Cards, MainContainer, DateContainer} from './styles';
 import {Graph} from './graph';
-import {thingspeakUrl, bethereUrl} from '../../services/configs';
 import {getUserId, getUserDevices} from '../../store/user/selectors';
 import {updateDeviceSettings} from '../../store/user/actions';
 import COMMANDS from '../../services/commands';
@@ -33,7 +34,6 @@ const pumpTimeSetPoint = 1200000;
 
 export const Dashboard = () => {
     const [pumpFlag, setPumpFlag] = useState(false);
-    const [autoPumpFlag, setAutoPumpFlag] = useState(false);
     const userDevices = useSelector(getUserDevices);
     const userId = useSelector(getUserId);
     const [selectedDevice, setSelectedDevice] = useState(_.get(userDevices, '[0]._id'));
@@ -47,12 +47,13 @@ export const Dashboard = () => {
     const [showHumidityChart, setShowHumidityChart] = useState(false);
     const [localStationStatus, setLocalStationStatus] = useState(false);
     const { formatDate, parseDate } = MomentLocaleUtils;
-    const dispatch = useDispatch();
     const deviceSerialKey = _.get(_.get(userDevices, '[0]'), 'deviceSerialKey');
     const wateringRoutineSettings = _.get(userDevices, '[0].settings[0].wateringRoutine');
     const wateringEnabled = _.get(wateringRoutineSettings, 'enabled');
     const autoWateringDuration = _.get(wateringRoutineSettings, 'duration'); // in minutes always
     const [loading, setLoading] = useState(false);
+    const dispatch = useDispatch();
+    const translate = useTranslate("home");
 
     const handleDateChange = (date) => {
         const momentDate = moment(date);
@@ -90,7 +91,6 @@ export const Dashboard = () => {
                 const lastPumpStatus = _.get(lastStatusAll, 'data.manualPump.commandName');
     
                 if(lastAutoPumpStatus === COMMANDS.WATERING_ROUTINE_PUMP.ON){
-                    setAutoPumpFlag(true);
                     setPumpFlag(true);
                     remainingTime = calculateRemainingTime(lastAutoPumpStatus); 
                 }
@@ -101,7 +101,6 @@ export const Dashboard = () => {
                 } 
     
                 if(remainingTime.mins < 0 || remainingTime.secs < 0) {
-                    setAutoPumpFlag(false);
                     setPumpFlag(false);
                 } else {
                     setTimeLeft(`${remainingTime.mins}:${remainingTime.secs}`);
@@ -243,26 +242,33 @@ export const Dashboard = () => {
 
     const renderAutoWateringLabel = () => {
         return wateringEnabled 
-            ? <span style={{color: 'green'}}>ON</span> 
-            : <span style={{color: 'red'}}>OFF</span>;
+            ? <span style={{color: 'green'}}>{translate('onLabel')}</span> 
+            : <span style={{color: 'red'}}>{translate('offLabel')}</span>;
     }
 
     const renderStatusLabel = () => {
         if (localStationStatus) {
-            return !pumpFlag ? <span style={{color: 'green'}}>Available</span> : <div>Remaining time: {timeLeft} mins</div> ;
+            return (
+                !pumpFlag 
+                    ? <span style={{color: 'green'}}>{translate('localStationStatusOnLabel')}</span> 
+                    : <div>Remaining time: {timeLeft} mins</div> 
+            );
         } else {
-            return <span style={{color: 'red'}}>Local station is offline</span>;
+            return (
+                <span style={{color: 'red'}}>
+                    {translate('localStationStatusOffLabel')}
+                </span>);
         }
     }
 
     return (
         <MainContainer>
-            <Header title="Dashboard" />
+            <Header title={translate('title')} />
             <div>
                 {/* <span style={{fontSize: "20px"}}>Hello! Your garden looks good today:</span> */}
                 <Cards>
                     <NewCard 
-                        label={"Temperature (°C)"} 
+                        label={`${translate('temperatureLabel')} (°C)`} 
                         icon={"thermometer half"} 
                         internalMeasure={measures.internalTemperature} 
                         externalMeasure={measures.externalTemperature}
@@ -272,7 +278,7 @@ export const Dashboard = () => {
                         }}
                     />
                     <NewCard 
-                        label={"Humidity (%)"} 
+                        label={`${translate('humidityLabel')} (%)`} 
                         icon={"tint"} 
                         internalMeasure={measures.internalHumidity} 
                         externalMeasure={measures.externalHumidity} 
@@ -282,7 +288,7 @@ export const Dashboard = () => {
                         }}
                     />
                     <NewCard 
-                        label={"Watering"} 
+                        label={translate('wateringLabel')} 
                         icon={"cog"}
                         pump={true}
                         children={
