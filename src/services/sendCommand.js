@@ -36,7 +36,7 @@ const payloadList = {
         categoryName: COMMANDS.BACKLIGHT.NAME,
         commandName: COMMANDS.BACKLIGHT.OFF,
     },
-    SETTINGS_ON: {
+    SETTINGS: {
         categoryName: COMMANDS.SETTINGS.NAME,
         commandName: COMMANDS.SETTINGS.ON,
     }
