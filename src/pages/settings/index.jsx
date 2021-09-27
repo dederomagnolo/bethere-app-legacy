@@ -138,12 +138,13 @@ export const Settings = () => {
       );
 
       if (!toggleOff) {
+				const pumpTimerToSend = editManualPumpTimer ? manualTimer : pumpTimer;
         await sendCommand(
           "SETTINGS",
           userId,
           deviceId,
           `${backlight},${minutesToMilliseconds(
-            pumpTimer
+            pumpTimerToSend
           )},${secondsToMilliseconds(
             localMeasureInterval
           )},${minutesToMilliseconds(
