@@ -139,7 +139,7 @@ export const Settings = () => {
 
       if (!toggleOff) {
         await sendCommand(
-          "SETTINGS_ON",
+          "SETTINGS",
           userId,
           deviceId,
           `${backlight},${minutesToMilliseconds(
