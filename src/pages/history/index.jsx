@@ -170,7 +170,7 @@ const History = () => {
                     const createdAt = _.get(command, 'createdAt');
                     return (
                         <CommandCard>
-                            <div>{moment(createdAt).tz('America/Sao_Paulo').format("DD/MM/YYYY HH:mm")}</div>
+                            <div>{moment(createdAt).tz('America/Sao_Paulo').format("HH:mm")}</div>
                             <CommandLabels>
                                 <CommandCategory>{getCategoryLabel(commandCategory)}</CommandCategory>
                                 {getCommandLabel(commandName)}
