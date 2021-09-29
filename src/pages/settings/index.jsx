@@ -27,7 +27,7 @@ import {
   SubOptionContainer,
 	SuccessButtonContainer
 } from "./styles";
-import COMMANDS from "../../services/commands";
+import {COMMANDS} from "../../services/commands";
 import ResetOption from "./reset";
 import { getUserDevices, getUserId } from "../../store/user/selectors";
 import { updateDeviceSettings } from "../../store/user/actions";
@@ -36,6 +36,8 @@ import sendCommand from "../../services/sendCommand";
 import {
   minutesToMilliseconds,
   secondsToMilliseconds,
+	getDeviceSettings,
+	getDeviceOptionsToSelect
 } from "../../utils/functions";
 import SuccessButton from "./successButton";
 
@@ -55,7 +57,6 @@ export const Settings = () => {
   );
 	const [deviceSettings, setDeviceSettings] = useState(_.get(userDevices, '[0].settings[0]'));
 
-  
   const wateringRoutineSettings = _.get(deviceSettings, "wateringRoutine");
 	const manualTimerFromRemote = _.get(deviceSettings, "pumpTimer");
 
@@ -74,13 +75,6 @@ export const Settings = () => {
 	const [manualTimer, setManualTimer] = useState(manualTimerFromRemote);
 	
 	const deviceId = _.get(selectedDevice, "_id");
-	
-  const userDeviceOptions = _.map(userDevices, (device) => {
-    return {
-      value: device._id,
-      label: device.deviceSerialKey,
-    };
-  });
 	
 	const timeOptions = [];
   for (let i = 0; i < 24; i++) {
@@ -115,13 +109,15 @@ export const Settings = () => {
 				duration 
 			} = routinePayload;
 
+			const pumpTimerToSend = editManualPumpTimer ? manualTimer : pumpTimer;
+
 			const payload = {
 				userId,
 				deviceId,
 				settingsId: _.get(deviceSettings, "_id"),
 				localMeasureInterval,
 				remoteMeasureInterval,
-				pumpTimer: editManualPumpTimer ? manualTimer : pumpTimer,
+				pumpTimer: pumpTimerToSend,
 				backlight,
 				wateringRoutine: {
 					startTime: startTime,
@@ -138,7 +134,7 @@ export const Settings = () => {
       );
 
       if (!toggleOff) {
-				const pumpTimerToSend = editManualPumpTimer ? manualTimer : pumpTimer;
+				
         await sendCommand(
           "SETTINGS",
           userId,
@@ -196,22 +192,12 @@ export const Settings = () => {
     }
   };
 
-  const getDeviceSettings = () => {
-    const selectedDeviceData = _.find(
-      userDevices,
-      (device) => deviceId === device._id
-    );
-    return _.get(selectedDeviceData, "settings[0]");
-  };
-
   const handleSetSelectedDevice = (selected) => {
     const device = _.find(
       userDevices,
       (device) => selected.value === device._id
     );
     setSelectedDevice(device);
-
-
   };
 
   const handleSendCommand = async () => {
@@ -245,7 +231,7 @@ export const Settings = () => {
   };
 
   useEffect(() => {
-    const selectedDeviceSettings = getDeviceSettings();
+    const selectedDeviceSettings = getDeviceSettings(userDevices, deviceId);
     setDeviceSettings(selectedDeviceSettings);
     const routineSettings = _.get(selectedDeviceSettings, "wateringRoutine");
     setRoutinePayload({ ...routineSettings });
@@ -288,7 +274,7 @@ export const Settings = () => {
   };
 
   return (
-    <Container className="options" style={{ height: "100%", minWidth: "80%" }}>
+    <Container className="settings" style={{ height: "100%", minWidth: "80%" }}>
       <Header title={translate("title")} />
       <div>
         <OptionLabel>{translate("selectDeviceLabel")}</OptionLabel>
@@ -301,9 +287,9 @@ export const Settings = () => {
               width: "300px",
             }),
           }}
-          defaultValue={userDeviceOptions[0]}
+          defaultValue={_.get(getDeviceOptionsToSelect(userDevices), '[0]')}
           onChange={handleSetSelectedDevice}
-          options={userDeviceOptions}
+          options={getDeviceOptionsToSelect(userDevices)}
         />
         <Disclaimer>{translate("defaultDeviceDisclaimer")}</Disclaimer>
       </div>

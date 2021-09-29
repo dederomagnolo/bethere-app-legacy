@@ -1,4 +1,4 @@
-import COMMANDS from './commands';
+import {COMMANDS} from './commands';
 import callApi from './callApi';
 
 const APP = 'App';
