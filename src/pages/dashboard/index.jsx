@@ -17,7 +17,7 @@ import {NewCard} from '../../components/newCard';
 import {Cards, MainContainer, DateContainer} from './styles';
 import {Graph} from './graph';
 import {getUserId, getUserDevices} from '../../store/user/selectors';
-import {updateDeviceSettings} from '../../store/user/actions';
+import {setUserDevices} from '../../store/devices/actions';
 import {COMMANDS} from '../../services/commands';
 import sendCommand from '../../services/sendCommand';
 
@@ -84,6 +84,18 @@ export const Dashboard = () => {
         
         return { mins, secs };
     }
+
+    useEffect(() => {
+        const fetchUserDevices = async () => {
+            const res = await api.post(`${bethereUrl}/devices/user-devices`, {
+              userId,
+            });
+            const userDevices = _.get(res, "data");
+            dispatch(setUserDevices(userDevices));
+        };
+
+        fetchUserDevices();
+    }, []);
 
     useEffect(() => {
         const updatePumpFromRemote = async () => {
@@ -207,7 +219,7 @@ export const Dashboard = () => {
         updateFields(3);
         updateFields(5);
 
-    }, [selectedDate, userDevices]);
+    }, [selectedDate]);
         
     const updatePump = async () => {
         try {

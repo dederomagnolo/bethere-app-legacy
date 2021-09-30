@@ -20,7 +20,10 @@ export const COMMANDS = {
         OFF: 'LCD_OFF'
     },
     MEASURE_INTERVAL: 'Measure Interval',
-    RESET: 'Reset',
+    RESET: {
+        NAME: 'Reset',
+        COMMAND: 'RESET_ESP'
+    },
     SETTINGS: {
         NAME: 'Settings',
         ON: 'SETTINGS'
