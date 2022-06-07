@@ -24,6 +24,11 @@ export const COMMANDS = {
         NAME: 'Reset',
         COMMAND: 'RESET_ESP'
     },
+    SYSTEM: {
+        NAME: 'System',
+        RESET_ESP: 'RESET_ESP',
+        RESET_RELAY: 'RESET_RELAY_STATE'
+    },
     SETTINGS: {
         NAME: 'Settings',
         ON: 'SETTINGS'

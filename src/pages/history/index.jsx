@@ -107,6 +107,8 @@ const History = () => {
             case 'WR_PUMP_ON':
             case 'WR_ON':
                 return <GreenLabel>ON</GreenLabel>
+            case 'RESET_RELAY_STATE':
+            case 'RESET_ESP':
             case 'SETTINGS':
                 return <BlueLabel>SET</BlueLabel>
             default:
@@ -124,6 +126,8 @@ const History = () => {
                 return translate('autoWateringMode')
             case COMMANDS.SETTINGS.NAME:
                 return translate('settings')
+            case COMMANDS.SYSTEM.NAME:
+                return translate('systemReset')
             default:
                 return ''
         }

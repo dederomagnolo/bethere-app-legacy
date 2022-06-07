@@ -47,7 +47,8 @@ const portuguese = {
       manualPumpCategory: "Irrigação manual remota",
       wateringRoutineCategory: "Irrigação automática",
       autoWateringMode: "Configurar irrigação automática",
-      settings: "Configuração"
+      settings: "Configuração",
+      systemReset: "Reinicialização"
     }
 };
 
