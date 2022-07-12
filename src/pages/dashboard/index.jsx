@@ -52,11 +52,13 @@ export const Dashboard = () => {
   const [showHumidityChart, setShowHumidityChart] = useState(false);
   const [localStationStatus, setLocalStationStatus] = useState(false);
   const { formatDate, parseDate } = MomentLocaleUtils;
-  const deviceSerialKey = _.get(_.get(userDevices, "[0]"), "deviceSerialKey");
+  const device = _.get(userDevices, "[0]");
+  const deviceSerialKey = _.get(device, "deviceSerialKey");
   const wateringRoutineSettings = _.get(
     userDevices,
     "[0].settings[0].wateringRoutine"
   );
+  const userHasAddons = _.get(device, "addons");
   const wateringEnabled = _.get(wateringRoutineSettings, "enabled");
   const autoWateringDuration = _.get(wateringRoutineSettings, "duration"); // in minutes always
   const [loading, setLoading] = useState(false);
@@ -331,32 +333,53 @@ export const Dashboard = () => {
     }
   };
 
+  const renderDHTInfo = () => {
+    return (
+      <div style={{ display: 'flex' }}>
+        <NewCard
+          label={`${translate("temperatureLabel")} (°C)`}
+          icon={"thermometer half"}
+          multipleMeasures={{
+            internalMeasure: measures.internalTemperature,
+            externalMeasure: measures.externalTemperature
+          }}
+          onClick={() => {
+            setShowTemperatureChart(true);
+            setShowHumidityChart(false);
+          }}
+        />
+        <NewCard
+          label={`${translate("humidityLabel")} (%)`}
+          icon={"tint"}
+          multipleMeasures={{
+            internalMeasure: measures.internalHumidity,
+            externalMeasure: measures.externalHumidity
+          }}
+          onClick={() => {
+            setShowHumidityChart(true);
+            setShowTemperatureChart(false);
+          }}
+        />
+      </div>
+    )
+  }
+
+  const renderMoistureInfo = () => {
+    return (
+      <NewCard
+        label={`${translate("humidityLabel")} (%)`}
+        icon={"tint"}
+      />
+    )
+  }
+
   return (
     <MainContainer>
       <Header title={translate("title")} />
       <div>
         {/* <span style={{fontSize: "20px"}}>Hello! Your garden looks good today:</span> */}
         <Cards>
-          <NewCard
-            label={`${translate("temperatureLabel")} (°C)`}
-            icon={"thermometer half"}
-            internalMeasure={measures.internalTemperature}
-            externalMeasure={measures.externalTemperature}
-            onClick={() => {
-              setShowTemperatureChart(true);
-              setShowHumidityChart(false);
-            }}
-          />
-          <NewCard
-            label={`${translate("humidityLabel")} (%)`}
-            icon={"tint"}
-            internalMeasure={measures.internalHumidity}
-            externalMeasure={measures.externalHumidity}
-            onClick={() => {
-              setShowHumidityChart(true);
-              setShowTemperatureChart(false);
-            }}
-          />
+          {userHasAddons ? renderMoistureInfo() : renderDHTInfo()}
           <NewCard
             label={translate("wateringLabel")}
             icon={"cog"}
@@ -388,17 +411,17 @@ export const Dashboard = () => {
           ></NewCard>
         </Cards>
         {/* <Cards>
-                    <NewCard 
-                            label={"CO2 (ppm)"} 
-                            icon={"asterisk"} 
-                            internalMeasure={measures.internalHumidity} 
-                            externalMeasure={measures.externalHumidity} 
-                            onClick={() => {
-                                setShowHumidityChart(true)
-                                setShowTemperatureChart(false);
-                            }}
-                    />
-                </Cards> */}
+          <NewCard 
+                  label={"CO2 (ppm)"} 
+                  icon={"asterisk"} 
+                  internalMeasure={measures.internalHumidity} 
+                  externalMeasure={measures.externalHumidity} 
+                  onClick={() => {
+                      setShowHumidityChart(true)
+                      setShowTemperatureChart(false);
+                  }}
+          />
+      </Cards> */}
         <DateContainer>
           <LeftArrow fill="#1491a869" size={20} onClick={goToPreviousDay} />
           <DayPickerInput
