@@ -137,7 +137,7 @@ export const Settings = () => {
         payload
       );
 
-      if (!wateringRoutineEnabledState) {
+      if (editManualPumpTimer || !wateringRoutineEnabledState) {
         await sendCommand(
           "SETTINGS",
           userId,
